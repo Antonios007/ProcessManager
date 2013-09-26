@@ -10,6 +10,7 @@ namespace ProcessManager
     {
         static List<string> finalMessage = new List<string>();
         static bool display_final_message = false;
+        static bool show_timer_tick = true; 
 
         static void Main(string[] args)
         {
@@ -29,11 +30,17 @@ namespace ProcessManager
             startService("ttmd");
             startService("TTSimManager");
 
+            //ProcessStartInfo allows additional startup parameters
+            //ProcessStartInfo psi = new ProcessStartInfo("C:\\tt\\Guardian\\GuardianStart.exe");
+            //psi.WindowStyle = ProcessWindowStyle.Maximized;
+            //Process.Start(psi);
+
             Process.Start("C:\\tt\\Guardian\\GuardianStart.exe");
             Console.WriteLine("Guardian Re-started");
 
             if (display_final_message)
             {
+                show_timer_tick = false;
                 Console.WriteLine("ERROR MESSAGES:");
                 foreach (string line in finalMessage)
                 {
@@ -51,21 +58,24 @@ namespace ProcessManager
             {
                 //works but X-trader popup confirm stops exit
                 //proc[0].CloseMainWindow();
+                string pname = string.Empty;
                 try
-                {
+                { 
+                    pname = proc[0].ProcessName;
                     proc[0].Kill();
                 }
                 catch (Exception ex)
                 {
                     display_final_message = true;
                     finalMessage.Add(ex.Message);
-                    finalMessage.Add("X_TRADER must be stopped and re-started.");
+                    finalMessage.Add(string.Format("{0} must be stopped and re-started.", pname));
                 }
             }
         }
 
         private static void Tick(Object stateInfo)
         {
+            if (show_timer_tick)
             Console.Write(".");
         }
 
@@ -74,30 +84,50 @@ namespace ProcessManager
             ServiceController srvc = new ServiceController(service);
             try
             {
-
                 srvc.Stop();
-                srvc.WaitForStatus(ServiceControllerStatus.Stopped, TimeSpan.FromSeconds(10));
-
+                srvc.WaitForStatus(ServiceControllerStatus.Stopped, TimeSpan.FromSeconds(20));
                 Console.WriteLine("\n{0} : {1}", srvc.DisplayName, srvc.Status);
             }
             catch (Exception ex)
             {
-                Process[] proc = Process.GetProcessesByName(service);
-
-                if (proc.Length > 0)
-                    proc[0].WaitForExit(10);
-
-                if (!Equals(srvc.Status, ServiceControllerStatus.Stopped))
+                if (Equals(srvc.Status, ServiceControllerStatus.StopPending))
                 {
-                    if (!proc[0].HasExited)
-                        proc[0].Kill();
+                    Process[] proc = Process.GetProcessesByName(service);
 
-                    if (proc[0].HasExited)
-                    { Console.WriteLine("\nProcess Killed : {0}", proc[0].ProcessName); }
-                    else
+                    if (proc.Length > 0)
                     {
-                        display_final_message = true;
-                        finalMessage.Add(string.Format("ERROR: {0}\nYou may need to run this application again.", ex.Message));
+                        try
+                        {
+                            if (!proc[0].HasExited)
+                                proc[0].WaitForExit(10);
+
+                            if (!proc[0].HasExited)
+                                proc[0].Kill();
+
+                            if (proc[0].HasExited)
+                            { Console.WriteLine("\nProcess Killed : {0}", proc[0].ProcessName); }
+                            else
+                            {
+                                display_final_message = true;
+                                finalMessage.Add(string.Format(
+                                    "ERROR: {0} may not have stopped properly.\n\r"+
+                                    "You may need to run this application again if Guardian doe not turn yellow or green in 30 seconds.\n\r"+
+                                "EXCEPTION: {1}", srvc.DisplayName,  ex.Message));
+                            }
+                        }
+                        catch (Exception ex2)
+                        {
+                            if (Equals(srvc.Status, ServiceControllerStatus.Stopped))
+                            { Console.WriteLine("\n{0} : {1}", srvc.DisplayName, srvc.Status); }
+                            else
+                            {
+                                display_final_message = true;
+                                finalMessage.Add(string.Format(
+                                    "ERROR: {0} may not have stopped properly.\n\r" +
+                                    "You may need to run this application again if Guardian doe not turn yellow or green in 30 seconds.\n\r" +
+                                "EXCEPTION: {1}", srvc.DisplayName, ex2.Message));
+                            }
+                        }
                     }
                 }
             }

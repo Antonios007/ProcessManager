@@ -1,1 +1,0 @@
-ClickOnce Deploy Folder

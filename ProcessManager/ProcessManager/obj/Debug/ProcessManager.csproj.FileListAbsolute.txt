@@ -1,6 +1,0 @@
-C:\!GitHub\ProcessManager\ProcessManager\ProcessManager\bin\Debug\ProcessManager.exe.config
-C:\!GitHub\ProcessManager\ProcessManager\ProcessManager\bin\Debug\ProcessManager.exe
-C:\!GitHub\ProcessManager\ProcessManager\ProcessManager\bin\Debug\ProcessManager.pdb
-C:\!GitHub\ProcessManager\ProcessManager\ProcessManager\obj\Debug\ProcessManager.csprojResolveAssemblyReference.cache
-C:\!GitHub\ProcessManager\ProcessManager\ProcessManager\obj\Debug\ProcessManager.exe
-C:\!GitHub\ProcessManager\ProcessManager\ProcessManager\obj\Debug\ProcessManager.pdb
